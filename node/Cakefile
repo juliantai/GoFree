@@ -7,17 +7,17 @@ spawn           = child_process.spawn
 REPORTER = "spec"
 
 task "test", "run tests", ->
-	test = exec "NODE_ENV=test 
-		mocha 
+	test = exec "NODE_ENV=test
+		mocha
 		--compilers coffee:coffee-script
-		--require coffee-script 
+		--require coffee-script
 		--require test/test_helper.coffee
 		--colors
 		--reporter #{REPORTER}
 		--timeout 60000
 		"
 
-	test.stdout.on 'data', 	console.log	
+	test.stdout.on 'data', 	console.log
 	test.stderr.on 'data', 	console.warn
 
 task "db:populate_airports", 'populate airports', ->
@@ -66,6 +66,9 @@ task "dev", 'development server w/ autoreload', ->
 
 	setTimeout ( ->
 		nodemon = exec "nodemon -w public/css/ -w app/ -w views/ -w app.js app.js"
+
+		nodemon.stdout.setEncoding 'utf8'
+		nodemon.stderr.setEncoding 'utf8'
 		nodemon.stdout.on 'data', console.log
 		nodemon.stderr.on 'data', console.warn
 	), 1000
