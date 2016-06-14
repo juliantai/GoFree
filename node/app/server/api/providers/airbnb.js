@@ -21,26 +21,41 @@
     }()), function(i){
       return function(cb){
         var airUrl;
-        airUrl = "https://m.airbnb.com/api/v1/listings/search?checkin=" + origin.date + "&checkout=" + destination.date + "&location=" + destination.place.name + "--" + destination.place.country_name + "&number_of_guests=" + extra.adults + "&offset=" + i * 20;
-        return cache.request(airUrl, function(error, body){
+        airUrl = "https://api.airbnb.com/v2/search_results?client_id=3092nxybyb0otqw18e8nh5nty"
+        airUrl += "&checkin=" + origin.date + "&checkout=" + destination.date + "&location=" + destination.place.name + "--" + destination.place.country_name + "&number_of_guests=" + extra.adults + "&offset=" + i * 20;
+        // spoof browser to make this work
+        // curl -A "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5" https://api.airbnb.com/v2/search_results\?client_id\=3092nxybyb0otqw18e8nh5nty\&checkin\=2016-06-15\&checkout\=2016-06-30\&location\=Alexandria--Egypt\&number_of_guests\=2\&offset\=380
+
+        var opts = {
+          url: airUrl,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_3 like Mac OS X; en-us) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8J2 Safari/6533.18.5'
+          }
+        };
+        return cache.request(opts, function(error, body){
           var json, results;
+          console.log(error);
           if (error) {
             return cb(error, null);
           }
+
           try {
             json = JSON.parse(body);
           } catch (e$) {
             error = e$;
             return cb(error, null);
           }
-          if (!json.listings) {
+          // console.log(json.search_results)
+          if (!json.search_results) {
             return cb({
               message: 'no listings'
             }, null);
           }
-          results = _.map(json.listings, function(r){
+
+          results = _.map(json.search_results, function(r){
             var listing, days, hotel, dbHotel;
             listing = r.listing;
+
             days = moment.duration(moment(destination.date) - moment(origin.date)).days();
             hotel = {
               address: listing.address,
@@ -49,8 +64,8 @@
               latitude: listing.lat,
               longitude: listing.lng,
               name: listing.name,
-              photo: listing.medium_url,
-              price: listing.price * 30 * days,
+              photo: listing.picture_url,
+              price: r.pricing_quote.nightly_price * days,
               provider: exports.name,
               rating: null,
               reviews_count: listing.reviews_count,
